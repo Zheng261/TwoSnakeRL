@@ -2,8 +2,7 @@ import gym
 from TwoPlayerPPO import PPO, Memory
 from PIL import Image
 import torch
-from snakeGameGym import SnakeGameGym
-from twoSnakeGameGym import TwoSnakeGameGym
+from twoSnakeGameGymCurious import TwoSnakeGameGym
 import time
 
 
@@ -29,8 +28,8 @@ def test():
     render = True
     save_gif = False
 
-    filename_one = "PPOone_{}.pth".format(env_name)
-    filename_two = "PPOtwo_{}.pth".format(env_name)
+    filename_one = "PPO_curious_one_progress{}.pth".format(env_name)
+    filename_two = "PPO_curious_two_progress{}.pth".format(env_name)
     directory = ""
     
 
@@ -57,7 +56,7 @@ def test():
         for t in range(max_timesteps):
             print(t)
             ## So that it doesn't go too fast and goes at a normal snake game pace
-            time.sleep(0.05);
+            time.sleep(0.1);
              # Running policy_old:
             action_one = ppo_one.policy.act(state_one, memory_one)
             state_one, reward_one, done_one, scores_one = env.step(action_one, 0)

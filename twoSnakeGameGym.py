@@ -92,11 +92,12 @@ class SnakeApp:
         self._display_surf = None
         self._image_surf = None
         self._apple_surf = None
+        self.verbose = False
 
         self.game = Game()
         ### 2 agents
-        agent_one = Player(2, agent=0)
-        agent_two = Player(2, agent=1)
+        agent_one = Player(3, agent=0)
+        agent_two = Player(3, agent=1)
         self.players = [agent_one, agent_two]
 
         self.gameWidth = GAME_WIDTH
@@ -154,13 +155,15 @@ class SnakeApp:
                 upDanger = 1
             if self.game.isCollision(self.players[agent].x[0],self.players[agent].y[0]-1,self.players[1].x[i], self.players[1].y[i]):
                 downDanger = 1
-
+        #print(agent, rightDanger, leftDanger, upDanger, downDanger)
         ### snake head, initialized badly
         return(np.array([dist, xDiff, yDiff, leftDanger, rightDanger, downDanger, upDanger, self.apple.x, self.apple.y, self.players[0].x[0], self.players[0].y[0], 
-            self.players[0].x[1], self.players[0].y[1],
-                self.players[1].x[0], self.players[1].y[0]], self.players[1].x[1], self.players[1].y[1]))
+                self.players[0].x[1], self.players[0].y[1],self.players[0].x[2], self.players[0].y[2],
+                self.players[1].x[0], self.players[1].y[0], self.players[1].x[1], self.players[1].y[1], self.players[1].x[2], self.players[1].y[2]]))
             
     def act(self, action, agent = 0):
+        if self.verbose:
+            print("agent ", agent , " did action ", action)
         self.players[agent].update(action)
         # does snake eat apple?
         if self.game.isCollision(self.apple.x,self.apple.y, self.players[agent].x[0], self.players[agent].y[0]):
@@ -179,48 +182,52 @@ class SnakeApp:
             self.apple.y = appleSpawn[1]
             self.players[agent].length = self.players[agent].length + 1
             self.players[agent].length_update()
+
             self.score = self.score + 1000
-            return (self.return_grid(agent), 1000, False, {"episode": {"r": self.score}})
+
+            return (self.return_grid(agent), 1000, False, {"episode": {"r": 1000}})
 
         # does snake collide with itself?
         for i in range(0,self.players[0].length):
             if (i != 0 or agent != 0):
                 if self.game.isCollision(self.players[agent].x[0],self.players[agent].y[0],self.players[0].x[i], self.players[0].y[i]):
                     if agent == 0:
-                        pass
-                        #print("dead, self collide")
+                        if self.verbose:
+                            print("dead, self collide, we are ", agent)
                     else:
-                        pass
-                        #print("dead, collide with other agent, we are ", agent)
-                    return (self.return_grid(agent), -1, True, {"episode": {"r": self.score}})
+                        if self.verbose:
+                            print("dead, collide with other agent, we are ", agent)
+                    return (self.return_grid(agent), -1, True, {"episode": {"r": -1}})
 
         # does snake collide with other one?
         for i in range(0,self.players[1].length):
             if (i != 0 or agent != 1):
                 if self.game.isCollision(self.players[agent].x[0],self.players[agent].y[0],self.players[1].x[i], self.players[1].y[i]):
                     if agent == 1:
-                        pass
-                        #print("dead, self collide")
+                        if self.verbose:
+                            print("dead, self collide, we are ", agent)
                     else:
-                        pass
-                        #print("dead, collide with other agent, we are ", agent)
-                    return (self.return_grid(agent), -1, True, {"episode": {"r": self.score}})
+                        if self.verbose:
+                            print("dead, collide with other agent, we are ", agent)
+                    return (self.return_grid(agent), -1, True, {"episode": {"r": -1}})
 
         # left/right boundary
         if (self.players[agent].x[0] <= 0 or self.players[agent].x[0] >= self.gameWidth):
-            #print("dead, LR bounds")
+            if self.verbose:
+                print("dead, LR bounds")
        
-            return (self.return_grid(agent), -1, True,  {"episode": {"r": self.score}})
+            return (self.return_grid(agent), -1, True,  {"episode": {"r": -1}})
 
         # top/bottom boundary
         if (self.players[agent].y[0] <= 0 or self.players[agent].y[0] >= self.gameHeight):
-            #print("dead, UB bounds")
+            if self.verbose:
+                print("dead, UB bounds")
            
-            return (self.return_grid(agent), -1, True,  {"episode": {"r": self.score}})
+            return (self.return_grid(agent), -1, True,  {"episode": {"r": -1}})
             
         # Score goes down by 1 every turn to discourage inefficiency
         self.score = self.score - 1
-        return (self.return_grid(agent), - 1, False, {})
+        return (self.return_grid(agent), - 1, False, {"episode": {"r": -1}})
 
 
             ### Purely for graphics
@@ -272,7 +279,7 @@ class TwoSnakeGameGym(gym.Env):
     self.initBoard = initBoard
     # Example for using image as input:
     self.observation_space = spaces.Box(
-      low=0, high=21, shape=([17]), dtype=np.float16)
+      low=0, high=21, shape=([21]), dtype=np.float16)
     self.SnakeApp = SnakeApp()
     if self.initBoard:
         self.SnakeApp.on_init()

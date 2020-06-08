@@ -5,8 +5,7 @@ import torch.nn as nn
 import numpy as np
 from torch.distributions import Categorical
 import gym
-from snakeGameGym import SnakeGameGym
-from twoSnakeGameGym import TwoSnakeGameGym
+from twoSnakeGameGymCurious import TwoSnakeGameGym
 
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -173,9 +172,9 @@ def main():
     state_dim = env.observation_space.shape[0]
     action_dim = 4
     render = False
-    solved_reward = 8000         # stop training if avg_reward > solved_reward
+    solved_reward = 5000         # stop training if avg_reward > solved_reward
     log_interval = 20           # print avg reward in the interval
-    max_episodes = 10000        # max training episodes
+    max_episodes = 1000       # max training episodes
     max_timesteps = 1000         # max timesteps in one episode
     n_latent_var = 40           # number of variables in hidden layer
     update_timestep = 600      # update policy every n timesteps
@@ -190,10 +189,6 @@ def main():
     if random_seed:
         torch.manual_seed(random_seed)
         env.seed(random_seed)
-    
-
-
-    
 
     memory_one = Memory()
     ppo_one = PPO(state_dim, action_dim, n_latent_var, lr, betas, gamma, K_epochs, eps_clip)
@@ -202,10 +197,10 @@ def main():
     ppo_two = PPO(state_dim, action_dim, n_latent_var, lr, betas, gamma, K_epochs, eps_clip)
 
 
-    use_last_prog = True
+    use_last_prog = False
     if use_last_prog:
-        filename_one = "PPOone_progress_NC{}.pth".format(env_name)
-        filename_two = "PPOtwo_progress_NC{}.pth".format(env_name)
+        filename_one = "PPO_one_{}.pth".format(env_name)
+        filename_two = "PPO_two_{}.pth".format(env_name)
         directory = ""
         ppo_one.policy.load_state_dict(torch.load(directory+filename_one))
         ppo_two.policy.load_state_dict(torch.load(directory+filename_two))
@@ -236,7 +231,6 @@ def main():
 
             action_two = ppo_two.policy_old.act(state_two, memory_two)
             state_two, reward_two, done_two, scores_two = env.step(action_two, 1)
-
 
             done = done_one or done_two
             
@@ -286,8 +280,8 @@ def main():
             running_reward_one = 0
             running_reward_two = 0 
 
-            torch.save(ppo_one.policy.state_dict(), './PPOone_NC{}.pth'.format(env_name))
-            torch.save(ppo_one.policy.state_dict(), './PPOtwo_NC{}.pth'.format(env_name))
+            torch.save(ppo_one.policy.state_dict(), './PPO_curious_one_{}.pth'.format(env_name))
+            torch.save(ppo_one.policy.state_dict(), './PPO_curious_two_{}.pth'.format(env_name))
             break
         # logging
         if i_episode % log_interval == 0:
@@ -307,8 +301,8 @@ def main():
         ## after we hit max episodes
         ##torch.save(ppo.policy.state_dict(), './PPO_{}.pth'.format(env_name))
     
-    torch.save(ppo_one.policy.state_dict(), './PPOone_progress_NC{}.pth'.format(env_name))
-    torch.save(ppo_one.policy.state_dict(), './PPOtwo_progress_NC{}.pth'.format(env_name))
+    torch.save(ppo_one.policy.state_dict(), './PPO_curious_one_progress{}.pth'.format(env_name))
+    torch.save(ppo_one.policy.state_dict(), './PPO_curious_two_progress{}.pth'.format(env_name))
 if __name__ == '__main__':
     main()
     
